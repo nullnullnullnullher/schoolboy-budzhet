@@ -3,47 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Schoolboy: The Escape</title>
+    <title>Schoolboy: Bottom Joystick</title>
     <style>
         body { margin: 0; overflow: hidden; background: #000; font-family: sans-serif; touch-action: none; user-select: none; }
         canvas { display: block; width: 100vw; height: 100vh; }
+        #ui { position: absolute; top: 10px; left: 10px; color: #fff; background: rgba(0,0,0,0.8); padding: 8px; border: 2px solid #0f0; border-radius: 5px; z-index: 100; font-size: 12px; pointer-events: none; }
         
-        /* ИНТЕРФЕЙС */
-        #ui { position: absolute; top: 10px; left: 10px; color: #fff; background: rgba(0,0,0,0.8); padding: 10px; border: 2px solid #0f0; border-radius: 5px; z-index: 100; font-size: 14px; pointer-events: none; }
+        #mobile-ui { position: absolute; width: 100%; height: 100%; top: 0; left: 0; pointer-events: none; z-index: 500; display: none; }
+        .t-btn { pointer-events: auto; position: absolute; width: 60px; height: 60px; background: rgba(255,255,255,0.2); border: 2px solid #fff; border-radius: 50%; display: flex; justify-content: center; align-items: center; color: white; font-weight: bold; font-size: 10px; }
         
-        /* МОБИЛЬНЫЕ КНОПКИ (ТЕПЕРЬ ВИДНЫ ВСЕГДА ДЛЯ ТЕСТА) */
-        #mobile-ui { position: absolute; width: 100%; height: 100%; top: 0; left: 0; pointer-events: none; z-index: 500; }
-        .t-btn { pointer-events: auto; position: absolute; width: 65px; height: 65px; background: rgba(255,255,255,0.2); border: 2px solid #fff; border-radius: 50%; display: flex; justify-content: center; align-items: center; color: white; font-weight: bold; font-size: 10px; }
-        #joy-base { left: 30px; bottom: 30px; width: 110px; height: 110px; background: rgba(255,255,255,0.1); border-radius: 50%; pointer-events: auto; }
-        #joy-stick { position: absolute; top: 35px; left: 35px; width: 40px; height: 40px; background: #fff; border-radius: 50%; }
-        #btn-e { right: 20px; bottom: 20px; background: rgba(0,255,0,0.3); }
-        #btn-jump { right: 20px; bottom: 100px; }
-        #btn-shift { right: 100px; bottom: 20px; background: rgba(0,0,255,0.2); }
+        /* ДЖОЙСТИК В САМОМ НИЗУ */
+        #joy-base { left: 20px; bottom: 20px; width: 100px; height: 100px; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; pointer-events: auto; }
+        #joy-stick { position: absolute; top: 30px; left: 30px; width: 40px; height: 40px; background: #fff; border-radius: 50%; }
+        
+        #btn-e { right: 15px; bottom: 15px; background: rgba(0,255,0,0.3); }
+        #btn-jump { right: 15px; bottom: 85px; }
 
-        #punish, #win, #death { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80%; max-width: 400px; background: #fff; border: 5px solid #000; padding: 20px; text-align: center; color: #000; z-index: 1000; }
-        #win { border-color: gold; background: #ffffd0; }
-        #death { background: #600; color: #fff; border-color: red; }
-        #hands { display: none; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 300px; height: 150px; z-index: 200; pointer-events: none; }
-        .mop { position: absolute; bottom: 0; left: 50%; width: 15px; height: 300px; background: #8b4513; transform: translateX(-50%); border: 2px solid #000; }
+        #punish, #win, #death { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 85%; max-width: 350px; background: #fff; border: 4px solid #000; padding: 15px; text-align: center; z-index: 1000; border-radius: 10px; }
     </style>
 </head>
 <body>
-    <div id="ui">ЗАДАЧА: Найди КЛЮЧ и беги к ВЫХОДУ!<br>Инвентарь: <span id="inv">ПУСТО</span></div>
+    <div id="ui">Ключ: <span id="inv">НЕТ</span> | <span id="st-txt">ТИХО</span></div>
 
     <div id="mobile-ui">
         <div id="joy-base"><div id="joy-stick"></div></div>
-        <div id="btn-e" class="t-btn">ДЕЙСТВИЕ (E)</div>
+        <div id="btn-e" class="t-btn">ДЕЙСТВИЕ</div>
         <div id="btn-jump" class="t-btn">ПРЫЖОК</div>
-        <div id="btn-shift" class="t-btn">СТЕЛС</div>
     </div>
 
-    <div id="punish"><h2>НАКАЗАНИЕ</h2><p>Мой пол! (Жми ЛКМ/Тапай)</p><p>Чистота: <span id="cp">0</span>%</p></div>
-    
-    <div id="win"><h1>СВОБОДА!</h1><p>Андрей смог сбежать из дома!</p><button onclick="location.reload()">ИГРАТЬ ЕЩЕ РАЗ</button></div>
-
-    <div id="death"><h1>ПОЙМАН!</h1><button onclick="location.reload()">ЗАНОВО</button></div>
-
-    <div id="hands"><div class="mop"></div></div>
+    <div id="win"><h1>ПОБЕДА!</h1><button onclick="location.reload()">ЗАНОВО</button></div>
+    <div id="death"><h1>ПОЙМАН!</h1><button onclick="location.reload()">ЕЩЕ РАЗ</button></div>
+    <div id="punish"><h2>НАКАЗАНИЕ</h2><p>Мой пол!</p><h3><span id="cp">0</span>%</h3></div>
 
     <canvas id="g"></canvas>
 
@@ -54,72 +44,97 @@
     function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
     window.addEventListener('resize', resize); resize();
 
-    // 0-пол, 1-стена, 2-дверь, 3-кровать, 5-мама, 6-грязь, 7-КЛЮЧ, 8-ВЫХОД
+    if ('ontouchstart' in window || navigator.maxTouchPoints > 0) document.getElementById('mobile-ui').style.display = 'block';
+
     const map = [
-      [1,1,1,1,1,1,1,1,1,1],
-      [1,3,0,0,2,0,0,0,7,1],
-      [1,0,0,0,1,0,1,1,5,1],
-      [8,0,0,0,1,6,6,1,1,1],
-      [1,1,1,1,1,1,1,1,1,1]
+      ,
+      ,
+      ,
+      ,
+      ,
     ];
 
-    let doorOpen = 0, targetDoor = 0, clean = 0, hasKey = false, isOver = false, isPunish = false, mDown = false;
-    const player = { x: 1.5, y: 1.5, dir: 0, z: 0, vVel: 0, shift: false };
-    const enemy = { x: 8.5, y: 2.5, state: 'COOKING' };
+    let doorOpen = 0, targetDoor = 0, hasKey = false, isOver = false, isPunish = false, clean = 0;
+    const player = { x: 1.5, y: 1.5, dir: 0, vLook: 0, z: 0, vVel: 0 };
+    const enemy = { x: 8.5, y: 4.5, state: 'COOKING' };
     const keys = {};
-    let joy = { active: false, x: 0, y: 0 };
-
-    // УПРАВЛЕНИЕ
-    window.onkeydown = e => { 
-        keys[e.code] = true; 
-        if(e.code === 'KeyE') interact();
-        if(e.code === 'ShiftLeft') player.shift = true;
-        if(e.code === 'Space' && player.z === 0) player.vVel = 0.15;
-    };
-    window.onkeyup = e => { keys[e.code] = false; if(e.code === 'ShiftLeft') player.shift = false; };
     
-    document.addEventListener('touchstart', (e) => { 
-        mDown = true; 
-        if(e.touches[0].clientX > W/2) joy.lookActive = true; 
-    });
-    document.addEventListener('touchend', () => { mDown = false; joy.active = false; joy.lookActive = false; joy.x = joy.y = 0; document.getElementById('joy-stick').style.transform = ''; });
+    let joy = { active: false, x: 0, y: 0, id: null };
+    let look = { active: false, lastX: 0, lastY: 0, id: null };
 
-    const jBase = document.getElementById('joy-base');
-    jBase.ontouchstart = (e) => { e.stopPropagation(); joy.active = true; };
-    
-    document.addEventListener('touchmove', e => {
-        let t = e.touches[0];
-        if (joy.active) {
-            let r = jBase.getBoundingClientRect();
-            let dx = t.clientX - (r.left + 55), dy = t.clientY - (r.top + 55);
-            let d = Math.min(50, Math.sqrt(dx*dx + dy*dy));
-            let a = Math.atan2(dy, dx);
-            joy.x = Math.cos(a) * (d/50); joy.y = Math.sin(a) * (d/50);
-            document.getElementById('joy-stick').style.transform = `translate(${Math.cos(a)*d}px, ${Math.sin(a)*d}px)`;
-        } else if (t.clientX > W/2) {
-            player.dir += 0.05; // Вращение при таче справа
+    // ПК Ввод
+    canvas.addEventListener('click', () => { if (!isOver && !('ontouchstart' in window)) canvas.requestPointerLock(); });
+    document.addEventListener('mousemove', (e) => {
+        if (document.pointerLockElement === canvas) {
+            player.dir += e.movementX * 0.003;
+            player.vLook = Math.max(-H/2, Math.min(H/2, player.vLook - e.movementY * 2));
         }
     });
 
-    document.getElementById('btn-e').ontouchstart = (e) => { e.stopPropagation(); interact(); };
-    document.getElementById('btn-jump').ontouchstart = (e) => { e.stopPropagation(); if(player.z === 0) player.vVel = 0.15; };
-    document.getElementById('btn-shift').ontouchstart = (e) => { e.stopPropagation(); player.shift = !player.shift; };
+    window.onkeydown = e => { 
+        keys[e.code] = true; 
+        if(e.code === 'KeyE') interact();
+        if(e.code === 'Space' && player.z === 0) player.vVel = 0.15;
+    };
+    window.onkeyup = e => keys[e.code] = false;
+
+    // Телефон Ввод
+    canvas.addEventListener('touchstart', e => {
+        for (let t of e.changedTouches) {
+            if (t.clientX > W/2) {
+                look.active = true; look.id = t.identifier;
+                look.lastX = t.clientX; look.lastY = t.clientY;
+            }
+        }
+    }, {passive: false});
+
+    const jBase = document.getElementById('joy-base');
+    jBase.addEventListener('touchstart', e => {
+        joy.active = true; joy.id = e.targetTouches.identifier;
+    }, {passive: false});
+
+    document.addEventListener('touchmove', e => {
+        for (let t of e.touches) {
+            if (joy.active && t.identifier === joy.id) {
+                let r = jBase.getBoundingClientRect();
+                let dx = t.clientX - (r.left + 50), dy = t.clientY - (r.top + 50);
+                let d = Math.min(40, Math.sqrt(dx*dx + dy*dy));
+                let a = Math.atan2(dy, dx);
+                joy.x = Math.cos(a) * (d/40); joy.y = Math.sin(a) * (d/40);
+                document.getElementById('joy-stick').style.transform = `translate(${Math.cos(a)*d}px, ${Math.sin(a)*d}px)`;
+            }
+            if (look.active && t.identifier === look.id) {
+                player.dir += (t.clientX - look.lastX) * 0.006;
+                player.vLook = Math.max(-H/2, Math.min(H/2, player.vLook - (t.clientY - look.lastY) * 2.5));
+                look.lastX = t.clientX; look.lastY = t.clientY;
+            }
+        }
+    }, {passive: false});
+
+    document.addEventListener('touchend', e => {
+        for (let t of e.changedTouches) {
+            if (t.identifier === joy.id) { joy.active = false; joy.x = joy.y = 0; document.getElementById('joy-stick').style.transform = ''; }
+            if (t.identifier === look.id) look.active = false;
+        }
+    });
+
+    document.getElementById('btn-e').ontouchstart = (e) => { e.preventDefault(); interact(); };
+    document.getElementById('btn-jump').ontouchstart = (e) => { e.preventDefault(); if(player.z === 0) player.vVel = 0.15; };
 
     function interact() {
-        let tx = Math.floor(player.x + Math.cos(player.dir)*1.2);
-        let ty = Math.floor(player.y + Math.sin(player.dir)*1.2);
-        if(map[ty][tx] === 2) targetDoor = targetDoor ? 0 : 1;
-        if(map[ty][tx] === 7) { hasKey = true; map[ty][tx] = 0; document.getElementById('inv').innerText = "КЛЮЧ"; }
+        let tx = Math.floor(player.x + Math.cos(player.dir)*1.1), ty = Math.floor(player.y + Math.sin(player.dir)*1.1);
+        if(map[ty] && map[ty][tx] === 2) targetDoor = targetDoor ? 0 : 1;
+        if(map[ty] && map[ty][tx] === 7) { hasKey = true; map[ty][tx] = 0; document.getElementById('inv').innerText = "ЕСТЬ"; }
     }
 
     function render() {
         if(isOver) return;
-        const horizon = H/2 + (player.shift ? -H/8 : 0) + player.z * 100;
-        ctx.fillStyle = '#333'; ctx.fillRect(0, 0, W, horizon);
-        ctx.fillStyle = '#555'; ctx.fillRect(0, horizon, W, H - horizon);
+        const horizon = H/2 + player.vLook + player.z * 100;
+        ctx.fillStyle = '#222'; ctx.fillRect(0, 0, W, horizon);
+        ctx.fillStyle = '#444'; ctx.fillRect(0, horizon, W, H - horizon);
         doorOpen += (targetDoor - doorOpen) * 0.1;
-
         let zB = new Array(W).fill(20);
+
         for (let i = 0; i < W; i += 4) {
             let angle = player.dir - 0.6 + (i / W) * 1.2;
             let dist = 0, hit = 0, type = 0, dx = Math.cos(angle), dy = Math.sin(angle);
@@ -133,59 +148,52 @@
             }
             let cD = dist * Math.cos(angle - player.dir); zB[i] = cD;
             let wH = H / cD;
-            if(type === 1) ctx.fillStyle = '#999';
-            else if(type === 2) ctx.fillStyle = '#740';
-            else if(type === 3) ctx.fillStyle = '#00f';
-            else if(type === 7) ctx.fillStyle = 'gold'; // Ключ
-            else if(type === 8) ctx.fillStyle = '#fff'; // Выход
-            else ctx.fillStyle = '#444';
+            ctx.fillStyle = type === 2 ? '#740' : (type === 3 ? '#00f' : (type === 7 ? 'gold' : (type === 8 ? '#fff' : '#888')));
             ctx.fillRect(i, horizon - wH/2, 4, wH);
         }
-
+        
         let edx = enemy.x - player.x, edy = enemy.y - player.y, eD = Math.sqrt(edx*edx+edy*edy);
-        if(eD < 10) {
-            let eA = Math.atan2(edy, edx) - player.dir;
-            while(eA < -Math.PI) eA += Math.PI*2; while(eA > Math.PI) eA -= Math.PI*2;
-            if (Math.abs(eA) < 0.8) {
-                let ew = H / eD;
-                ctx.fillStyle = enemy.state === 'CHASING' ? 'red' : 'lime';
-                ctx.fillRect(((eA + 0.6) / 1.2 * W) - ew/4, horizon - ew/2, ew/2, ew);
-            }
+        let eA = Math.atan2(edy, edx) - player.dir;
+        while(eA < -Math.PI) eA += Math.PI*2; while(eA > Math.PI) eA -= Math.PI*2;
+        if (Math.abs(eA) < 0.8 && eD < zB[Math.floor((eA + 0.6) / 1.2 * W)]) {
+            let ew = H / eD;
+            ctx.fillStyle = enemy.state === 'CHASING' ? 'red' : 'lime';
+            ctx.fillRect(((eA + 0.6) / 1.2 * W) - ew/4, horizon - ew/2, ew/2, ew);
         }
     }
 
     function update() {
         if(isOver) return;
+        let cellType = map[Math.floor(player.y)][Math.floor(player.x)];
+        let onBed = (cellType === 3);
+
         if(isPunish) {
-            document.getElementById('cp').innerText = Math.floor(clean);
-            if(mDown) clean += 1;
-            if(clean >= 100) { isPunish = false; clean = 0; player.x = 1.5; player.y = 1.5; document.getElementById('punish').style.display = 'none'; document.getElementById('hands').style.display = 'none'; }
+            document.getElementById('cp').innerText = Math.floor(clean += 0.5);
+            if(clean >= 100) { isPunish = false; clean = 0; player.x = 1.5; player.y = 1.5; document.getElementById('punish').style.display = 'none'; }
             render(); requestAnimationFrame(update); return;
         }
 
         player.z += player.vVel;
         if (player.z > 0) player.vVel -= 0.01; else { player.z = 0; player.vVel = 0; }
 
-        let s = player.shift ? 0.03 : 0.08;
-        let mx = 0, my = 0;
+        let s = 0.075, mx = 0, my = 0;
         if(keys['KeyW']) { mx += Math.cos(player.dir)*s; my += Math.sin(player.dir)*s; }
         if(keys['KeyS']) { mx -= Math.cos(player.dir)*s; my -= Math.sin(player.dir)*s; }
         if(joy.active) { mx += (Math.cos(player.dir)*-joy.y + Math.sin(player.dir)*joy.x)*s; my += (Math.sin(player.dir)*-joy.y - Math.cos(player.dir)*joy.x)*s; }
         
-        let nx = player.x + mx, ny = player.y + my;
-        let cell = map[Math.floor(ny)][Math.floor(nx)];
-        if (cell !== 1) {
-            if(cell === 8 && hasKey) { isOver = true; document.getElementById('win').style.display = 'block'; }
-            if(cell !== 2 || doorOpen > 0.8) { player.x = nx; player.y = ny; }
-        }
-
+        if (map[Math.floor(player.y + my)][Math.floor(player.x + mx)] !== 1) { player.x += mx; player.y += my; }
+        if (cellType === 8 && hasKey) { isOver = true; document.getElementById('win').style.display = 'block'; }
+        
         let dTP = Math.sqrt((player.x-enemy.x)**2 + (player.y-enemy.y)**2);
-        if (dTP < 4 && !player.shift && map[Math.floor(player.y)][Math.floor(player.x)] !== 3) enemy.state = 'CHASING';
+        if (dTP < 4 && !onBed) enemy.state = 'CHASING';
+        else if (onBed) enemy.state = 'COOKING';
+
         if (enemy.state === 'CHASING') {
-            let ang = Math.atan2(player.y - enemy.y, player.x - enemy.x);
-            enemy.x += Math.cos(ang)*0.05; enemy.y += Math.sin(ang)*0.05;
-            if (dTP < 0.4) { isPunish = true; player.x = 6; player.y = 3; enemy.state = 'COOKING'; document.getElementById('punish').style.display = 'block'; document.getElementById('hands').style.display = 'block'; }
+            let a = Math.atan2(player.y - enemy.y, player.x - enemy.x);
+            enemy.x += Math.cos(a)*0.055; enemy.y += Math.sin(a)*0.055;
+            if (dTP < 0.4) { isPunish = true; enemy.state = 'COOKING'; document.getElementById('punish').style.display = 'block'; }
         }
+        document.getElementById('st-txt').innerText = onBed ? "БЕЗОПАСНО" : (enemy.state === 'CHASING' ? "ПОГОНЯ!" : "ТИХО");
         render(); requestAnimationFrame(update);
     }
     update();
