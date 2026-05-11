@@ -3,43 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Schoolboy: Full Universal Edition</title>
+    <title>Schoolboy Runaway FULL</title>
     <style>
         body { margin: 0; overflow: hidden; background: #000; font-family: sans-serif; touch-action: none; user-select: none; }
         canvas { display: block; }
-        #ui { position: absolute; top: 10px; left: 10px; color: #fff; background: rgba(0,0,0,0.8); padding: 10px; border: 1px solid #0f0; border-radius: 5px; z-index: 100; font-size: 12px; pointer-events: none; }
-        
-        /* КНИГА И НАКАЗАНИЕ */
-        #book, #punish { display: none; position: absolute; top: 30%; left: 50%; transform: translate(-50%, -50%); width: 280px; background: #fff; border: 5px solid #5d4037; padding: 20px; text-align: center; color: #000; z-index: 150; }
-        #punish { border-color: red; color: red; }
-        
-        /* МОБИЛЬНОЕ УПРАВЛЕНИЕ */
-        #mobile-ui { display: none; position: absolute; width: 100%; height: 100%; top: 0; left: 0; pointer-events: none; z-index: 500; }
-        .touch-btn { pointer-events: auto; position: absolute; width: 60px; height: 60px; background: rgba(255,255,255,0.2); border: 2px solid #fff; border-radius: 50%; display: flex; justify-content: center; align-items: center; color: white; font-weight: bold; font-size: 10px; }
-        #joy-base { left: 30px; bottom: 30px; width: 100px; height: 100px; background: rgba(255,255,255,0.1); border-radius: 50%; pointer-events: auto; }
-        #joy-stick { position: absolute; top: 30px; left: 30px; width: 40px; height: 40px; background: #fff; border-radius: 50%; }
-        #btn-e { right: 20px; bottom: 20px; background: rgba(0,255,0,0.3); }
-        #btn-jump { right: 20px; bottom: 100px; }
-
-        /* РУКИ И ШВАБРА */
-        #hands { display: none; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 300px; height: 150px; z-index: 200; pointer-events: none; }
-        .mop { position: absolute; bottom: 0; left: 50%; width: 15px; height: 300px; background: #8b4513; transform: translateX(-50%); border: 2px solid #000; }
-        .mop-head { position: absolute; top: 0; left: -40px; width: 100px; height: 30px; background: #ddd; border: 2px solid #000; }
-
+        #ui { position: absolute; top: 10px; left: 10px; color: #fff; background: rgba(0,0,0,0.8); padding: 10px; border: 2px solid #0f0; border-radius: 5px; z-index: 100; font-size: 14px; pointer-events: none; }
+        #punish { display: none; position: absolute; top: 20%; left: 50%; transform: translate(-50%, -50%); width: 300px; background: #fff; border: 5px solid red; padding: 20px; text-align: center; color: #000; z-index: 150; }
         #death { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(150,0,0,0.9); flex-direction: column; justify-content: center; align-items: center; z-index: 1000; color: white; }
+        #hands { display: none; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 400px; height: 200px; z-index: 200; pointer-events: none; }
+        .mop { position: absolute; bottom: 0; left: 50%; width: 20px; height: 350px; background: #8b4513; transform: translateX(-50%); border: 2px solid #000; }
+        .mop-head { position: absolute; top: 0; left: -50px; width: 120px; height: 40px; background: #ddd; border: 2px solid #000; }
     </style>
 </head>
 <body>
-    <div id="ui">СТАТУС: <span id="st" style="color: #0f0">ТИХО</span><br>WASD/Джойстик - Ходить</div>
-    <div id="mobile-ui">
-        <div id="joy-base"><div id="joy-stick"></div></div>
-        <div id="btn-e" class="touch-btn">E (ДВЕРЬ)</div>
-        <div id="btn-jump" class="touch-btn">ПРЫЖОК</div>
-    </div>
-    <div id="book">📖 Ты учишь уроки...</div>
-    <div id="punish"><h2>НАКАЗАНИЕ</h2><p>Мой пол на кухне! (ЛКМ/Тап)</p><p>Чистота: <span id="cp">0</span>%</p></div>
+    <div id="ui">СТАТУС: <span id="st" style="color: #0f0">ТИХО</span><br>WASD - Ходить | Shift - Стелс | E - Дверь</div>
+    <div id="punish"><h2>МЫТЬ ПОЛ!</h2><p>Стой на пятнах и жми ЛКМ</p><p>Чистота: <span id="cp">0</span>%</p></div>
     <div id="hands"><div class="mop"><div class="mop-head"></div></div></div>
-    <div id="death"><h1>ПОЙМАН!</h1><button onclick="location.reload()" style="padding:15px 30px">ЗАНОВО</button></div>
+    <div id="death"><h1>ПОЙМАН!</h1><button onclick="location.reload()" style="padding:15px 30px; cursor:pointer">ЗАНОВО</button></div>
     <canvas id="g"></canvas>
 
 <script>
@@ -48,133 +28,123 @@
     let W = window.innerWidth, H = window.innerHeight;
     canvas.width = W; canvas.height = H;
 
-    // Карта: 0-пол, 1-стена, 2-дверь, 3-кровать, 6-грязь
+    // 0-пол, 1-стена, 2-дверь, 3-кровать, 5-плита, 6-грязь
     const map = [
-      [1,1,1,1,1,1,1,1,1,1],
-      [1,3,0,0,2,0,0,6,6,1],
-      [1,1,1,1,1,1,1,1,1,1]
+        [1,1,1,1,1,1,1,1,1,1],
+        [1,3,0,0,1,0,0,0,5,1],
+        [1,0,0,0,2,0,0,6,6,1],
+        [1,1,1,1,1,1,1,1,1,1]
     ];
 
     let doorOpen = 0, targetDoor = 0, caught = 0, clean = 0, isOver = false, isPunish = false, mDown = false;
-    const player = { x: 1.5, y: 1.5, dir: 0, vLook: 0, z: 0, vVel: 0 };
-    const enemy = { x: 7.5, y: 1.5, dir: 3.14, state: 'COOKING' };
+    const player = { x: 1.5, y: 1.5, dir: 0, z: 0, vVel: 0 };
+    const enemy = { x: 8.5, y: 1.5, dir: 3.14, state: 'COOKING' };
     const keys = {};
-    let joy = { active: false, x: 0, y: 0 };
-
-    if ('ontouchstart' in window) document.getElementById('mobile-ui').style.display = 'block';
 
     function speak(t) {
         window.speechSynthesis.cancel();
         let m = new SpeechSynthesisUtterance(t); m.lang = 'ru-RU'; window.speechSynthesis.speak(m);
     }
 
-    // Ввод
-    window.onkeydown = e => keys[e.code] = true;
+    window.onkeydown = e => {
+        keys[e.code] = true;
+        if(e.code === 'KeyE') targetDoor = targetDoor === 0 ? 1 : 0;
+        if(e.code === 'Space' && player.z === 0) player.vVel = 0.15;
+    };
     window.onkeyup = e => keys[e.code] = false;
     document.addEventListener('mousedown', () => mDown = true);
     document.addEventListener('mouseup', () => mDown = false);
-    document.addEventListener('touchstart', () => mDown = true);
-    document.addEventListener('touchend', () => mDown = false);
-    document.addEventListener('click', () => { if(!isOver && !('ontouchstart' in window)) canvas.requestPointerLock(); });
+    document.addEventListener('click', () => { if(!isOver) canvas.requestPointerLock(); });
 
-    // Джойстик и Обзор
-    const jBase = document.getElementById('joy-base');
-    const jStick = document.getElementById('joy-stick');
-    jBase.addEventListener('touchstart', () => joy.active = true);
-    document.addEventListener('touchmove', e => {
-        let t = e.touches[0];
-        if (t.clientX < W/2) {
-            let r = jBase.getBoundingClientRect();
-            let dx = t.clientX - (r.left + 50), dy = t.clientY - (r.top + 50);
-            let d = Math.min(40, Math.sqrt(dx*dx + dy*dy));
-            let a = Math.atan2(dy, dx);
-            joy.x = Math.cos(a) * (d/40); joy.y = Math.sin(a) * (d/40);
-            jStick.style.transform = `translate(${Math.cos(a)*d}px, ${Math.sin(a)*d}px)`;
-        } else { player.dir += 0.05; } // Простое вращение на тач
-    });
-    document.addEventListener('touchend', () => { joy.active = false; joy.x = joy.y = 0; jStick.style.transform = ''; });
-    document.getElementById('btn-e').ontouchstart = () => targetDoor = targetDoor ? 0 : 1;
-    document.getElementById('btn-jump').ontouchstart = () => { if(player.z === 0) player.vVel = 0.15; };
-
-    function move(e, dx, dy) {
-        let nx = e.x + dx, ny = e.y + dy;
-        if (map[Math.floor(ny)] && map[Math.floor(ny)][Math.floor(nx)] !== 1) {
-            if (map[Math.floor(ny)][Math.floor(nx)] !== 2 || doorOpen > 0.8 || e === enemy) { e.x = nx; e.y = ny; }
+    document.addEventListener('mousemove', e => {
+        if (document.pointerLockElement === canvas) {
+            player.dir += e.movementX * 0.003;
+            if(isPunish && mDown) {
+                if(map[Math.floor(player.y)][Math.floor(player.x)] === 6) clean += 0.5;
+                document.getElementById('hands').style.transform = `translateX(-50%) rotate(${Math.sin(Date.now()/50)*15}deg)`;
+            }
         }
-    }
+    });
 
     function render() {
         if(isOver) return;
-        const horizon = H/2 + player.vLook + player.z * 100;
+        const horizon = H/2 + player.z * 100;
         ctx.fillStyle = '#444'; ctx.fillRect(0, 0, W, horizon);
         ctx.fillStyle = '#666'; ctx.fillRect(0, horizon, W, H - horizon);
+
         doorOpen += (targetDoor - doorOpen) * 0.1;
         let zB = new Array(W).fill(20);
 
-        for (let i = 0; i < W; i += 4) {
+        for (let i = 0; i < W; i += 2) {
             let angle = player.dir - 0.6 + (i / W) * 1.2;
-            let dist = 0, dx = Math.cos(angle), dy = Math.sin(angle);
-            while (dist < 12) {
-                dist += 0.1;
+            let dist = 0, hit = 0, type = 0, dx = Math.cos(angle), dy = Math.sin(angle);
+            while (dist < 15 && hit === 0) {
+                dist += 0.05;
                 let tx = Math.floor(player.x + dx * dist), ty = Math.floor(player.y + dy * dist);
                 if (map[ty] && map[ty][tx] > 0) {
                     if (map[ty][tx] === 2 && doorOpen > 0.8) continue;
-                    let cD = dist * Math.cos(angle - player.dir);
-                    zB[i] = cD;
-                    let wH = H / cD;
-                    ctx.fillStyle = map[ty][tx] === 2 ? '#740' : (map[ty][tx] === 3 ? '#00f' : (map[ty][tx] === 6 ? '#321' : '#888'));
-                    ctx.fillRect(i, horizon - wH/2, 4, wH);
-                    break;
+                    hit = 1; type = map[ty][tx];
                 }
             }
+            let cD = dist * Math.cos(angle - player.dir); zB[i] = cD; zB[i+1] = cD;
+            let wH = H / cD;
+            let col = Math.max(40, 255 - dist * 15);
+            if(type === 1) ctx.fillStyle = `rgb(${col},${col},${col})`;
+            else if(type === 2) ctx.fillStyle = '#740';
+            else if(type === 3) ctx.fillStyle = '#00f';
+            else if(type === 6) ctx.fillStyle = '#321';
+            else if(type === 5) ctx.fillStyle = '#222';
+            ctx.fillRect(i, horizon - wH/2, 2, wH);
         }
+
         // Мама
         let edx = enemy.x - player.x, edy = enemy.y - player.y, eD = Math.sqrt(edx*edx+edy*edy);
         let eA = Math.atan2(edy, edx) - player.dir;
         while(eA < -Math.PI) eA += Math.PI*2; while(eA > Math.PI) eA -= Math.PI*2;
-        if (Math.abs(eA) < 0.8 && eD < zB[Math.floor((eA + 0.6) / 1.2 * W)]) {
+        let sx = Math.floor((eA + 0.6) / 1.2 * W);
+        if (Math.abs(eA) < 0.8 && eD < (zB[sx] || 20)) {
             let ew = H / eD;
             ctx.fillStyle = (enemy.state === 'CHASING') ? 'red' : 'lime';
-            ctx.fillRect(((eA + 0.6) / 1.2 * W) - ew/4, horizon - ew/2, ew/2, ew);
+            ctx.fillRect(sx - ew/4, horizon - ew/2, ew/2, ew);
         }
     }
 
     function update() {
         if(isOver) return;
-        const onB = map[Math.floor(player.y)][Math.floor(player.x)] === 3;
-        document.getElementById('book').style.display = (onB && !isPunish) ? 'block' : 'none';
-
         if(isPunish) {
             document.getElementById('cp').innerText = Math.floor(clean);
-            if(mDown && map[Math.floor(player.y)][Math.floor(player.x)] === 6) clean += 0.5;
-            if(clean >= 100) { isPunish = false; clean = 0; player.x = 1.5; document.getElementById('punish').style.display = 'none'; document.getElementById('hands').style.display = 'none'; speak("Учи уроки!"); }
+            if(clean >= 100) { isPunish = false; clean = 0; player.x = 1.5; player.y = 1.5; document.getElementById('punish').style.display = 'none'; document.getElementById('hands').style.display = 'none'; speak("Учи уроки!"); }
             render(); requestAnimationFrame(update); return;
         }
 
         player.z += player.vVel;
         if (player.z > 0) player.vVel -= 0.01; else { player.z = 0; player.vVel = 0; }
 
-        let s = 0.06;
+        let s = keys['ShiftLeft'] ? 0.03 : 0.07;
         let mx = 0, my = 0;
         if(keys['KeyW']) { mx += Math.cos(player.dir)*s; my += Math.sin(player.dir)*s; }
         if(keys['KeyS']) { mx -= Math.cos(player.dir)*s; my -= Math.sin(player.dir)*s; }
-        if(joy.active) { mx += (Math.cos(player.dir)*-joy.y + Math.sin(player.dir)*joy.x)*s; my += (Math.sin(player.dir)*-joy.y - Math.cos(player.dir)*joy.x)*s; }
-        move(player, mx, my);
+        if(keys['KeyA']) { mx += Math.sin(player.dir)*s; my -= Math.cos(player.dir)*s; }
+        if(keys['KeyD']) { mx -= Math.sin(player.dir)*s; my += Math.cos(player.dir)*s; }
+
+        let nx = player.x + mx, ny = player.y + my;
+        if (map[Math.floor(ny)] && map[Math.floor(ny)][Math.floor(nx)] !== 1) {
+            if (map[Math.floor(ny)][Math.floor(nx)] !== 2 || doorOpen > 0.8) { player.x = nx; player.y = ny; }
+        }
 
         let dTP = Math.sqrt((player.x-enemy.x)**2 + (player.y-enemy.y)**2);
-        if (!onB && dTP < 3) enemy.state = 'CHASING';
+        if (dTP < 4 && !keys['ShiftLeft'] && map[Math.floor(player.y)][Math.floor(player.x)] !== 3) enemy.state = 'CHASING';
 
         if (enemy.state === 'CHASING') {
             let ang = Math.atan2(player.y - enemy.y, player.x - enemy.x);
-            move(enemy, Math.cos(ang)*0.04, Math.sin(ang)*0.04);
+            enemy.x += Math.cos(ang)*0.045; enemy.y += Math.sin(ang)*0.045;
             if (dTP < 0.4) {
                 caught++;
                 if(caught === 1) { 
-                    isPunish = true; player.x = 7.5; enemy.state = 'COOKING'; 
+                    isPunish = true; player.x = 7.5; player.y = 2.5; enemy.state = 'COOKING'; 
                     document.getElementById('punish').style.display = 'block'; 
-                    document.getElementById('hands').style.display = 'block'; 
-                    speak("Мой пол живо!");
-                } else { isOver = true; document.getElementById('death').style.display='flex'; }
+                    document.getElementById('hands').style.display = 'block'; speak("Мой пол живо!");
+                } else { isOver = true; document.getElementById('death').style.display='flex'; document.exitPointerLock(); }
             }
         }
         render(); requestAnimationFrame(update);
@@ -183,5 +153,3 @@
 </script>
 </body>
 </html>
-
-
