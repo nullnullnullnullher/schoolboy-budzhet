@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Schoolboy Mobile</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #000; font-family: sans-serif; touch-action: none; user-select: none; }
+        canvas { display: block; }
+        
+        /* ИНТЕРФЕЙС */
+        #mobile-ui { position: absolute; width: 100%; height: 100%; top: 0; left: 0; pointer-events: none; }
+        
+        /* Джойстик (Левая рука) */
+        #joy-base { 
+            position: absolute; left: 50px; bottom: 50px; 
+            width: 120px; height: 120px; background: rgba(255,255,255,0.1); 
+            border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; pointer-events: auto;
+        }
+        #joy-stick { 
+            position: absolute; top: 35px; left: 35px; 
+            width: 50px; height: 50px; background: #fff; 
+            border-radius: 50%; box-shadow: 0 0 15px rgba(0,0,0,0.5);
+        }
+
+        /* Кнопки действий (Правая рука) */
+        .btn { 
+            position: absolute; width: 70px; height: 70px; 
+            background: rgba(255,255,255,0.2); border: 2px solid #fff; 
+            border-radius: 50%; pointer-events: auto;
+            display: flex; justify-content: center; align-items: center;
+            color: white; font-weight: bold; font-size: 14px;
+        }
+        #btn-e { right: 40px; bottom: 40px; background: rgba(0, 255, 0, 0.3); }
+        #btn-jump { right: 40px; bottom: 130px; }
+        #btn-shift { right: 130px; bottom: 40px; }
+
+        /* Состояние */
+        #info { position: absolute; top: 10px; left: 10px; color: white; background: rgba(0,0,0,0.5); padding: 5px; border-radius: 5px; font-size: 12px; }
+        
+        /* Экран Смерти */
+        #death { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(150,0,0,0.9); flex-direction: column; justify-content: center; align-items: center; z-index: 1000; }
+        button { padding: 15px 40px; font-size: 20px; background: #fff; border: none; border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+    <canvas id="g"></canvas>
+
+    <div id="info">СТАТУС: <span id="st" style="color:#0f0">ТИХО</span></div>
+
+    <div id="mobile-ui">
+        <div id="joy-base"><div id="joy-stick"></div></div>
+        <div id="btn-e" class="btn">ОТКРЫТЬ</div>
+        <div id="btn-jump" class="btn">ПРЫЖОК</div>
+        <div id="btn-shift" class="btn">СТЕЛС</div>
+    </div>
+
+    <div id="death">
+        <h1 style="color:white">ПОЙМАН!</h1>
+        <button onclick="location.reload()">ЗАНОВО</button>
+    </div>
+
+<script>
+    const canvas = document.getElementById('g');
+    const ctx = canvas.getContext('2d');
+    let W = window.innerWidth, H = window.innerHeight;
+    canvas.width = W; canvas.height = H;
+
+    const map = [
+      ,
+      ,
+      ,
+    ];
+
+    const player = { x: 1.5, y: 1.5, dir: 0, vLook: 0, z: 0, vVel: 0, isCrouch: false };
+    const enemy = { x: 7.5, y: 1.5, state: 'COOKING' };
+    let doorOpen = 0, targetDoor = 0, isGameOver = false;
+
+    // --- ЛОГИКА ДЖОЙСТИКА ---
+    let joy = { active: false, x: 0, y: 0 };
+    const jBase = document.getElementById('joy-base');
+    const jStick = document.getElementById('joy-stick');
+
+    jBase.addEventListener('touchstart', (e) => { joy.active = true; });
+    document.addEventListener('touchmove', (e) => {
+        let touch = e.touches;
+        for(let i=0; i<touch.length; i++) {
+            let t = touch[i];
+            // Если касание в зоне джойстика
+            if (t.clientX < W/2) {
+                let rect = jBase.getBoundingClientRect();
+                let dx = t.clientX - (rect.left + 60);
+                let dy = t.clientY - (rect.top + 60);
+                let dist = Math.min(50, Math.sqrt(dx*dx + dy*dy));
+                let angle = Math.atan2(dy, dx);
+                joy.x = Math.cos(angle) * (dist/50);
+                joy.y = Math.sin(angle) * (dist/50);
+                jStick.style.transform = `translate(${Math.cos(angle)*dist}px, ${Math.sin(angle)*dist}px)`;
+            } else {
+                // Если касание справа — обзор
+                player.dir += t.force || 0.05; // упрощенный поворот для теста
+                if(e.movementX) player.dir += e.movementX * 0.005;
+            }
+        }
+    });
+    document.addEventListener('touchend', () => { joy.active = false; joy.x = joy.y = 0; jStick.style.transform = ''; });
+
+    // Кнопки
+    document.getElementById('btn-e').ontouchstart = () => targetDoor = targetDoor ? 0 : 1;
+    document.getElementById('btn-jump').ontouchstart = () => { if(player.z === 0) player.vVel = 0.15; };
+    document.getElementById('btn-shift').ontouchstart = () => { player.isCrouch = !player.isCrouch; };
+
+    // --- РЕНДЕР (Raycasting) ---
+    function render() {
+        if(isGameOver) return;
+        const horizon = H/2 + (player.isCrouch ? -H/6 : 0) + player.z * 100;
+        ctx.fillStyle = '#333'; ctx.fillRect(0, 0, W, horizon);
+        ctx.fillStyle = '#555'; ctx.fillRect(0, horizon, W, H - horizon);
+
+        doorOpen += (targetDoor - doorOpen) * 0.1;
+        
+        for (let i = 0; i < W; i += 4) {
+            let angle = player.dir - 0.6 + (i / W) * 1.2;
+            let dist = 0, hit = 0, dx = Math.cos(angle), dy = Math.sin(angle);
+            while (dist < 10 && hit === 0) {
+                dist += 0.1;
+                let tx = Math.floor(player.x + dx * dist), ty = Math.floor(player.y + dy * dist);
+                if (map[ty] && map[ty][tx] > 0) {
+                    if (map[ty][tx] === 2 && doorOpen > 0.8) continue;
+                    hit = 1;
+                    let cD = dist * Math.cos(angle - player.dir);
+                    let wH = (H / cD) * (player.isCrouch ? 0.5 : 1);
+                    ctx.fillStyle = map[ty][tx] === 2 ? '#840' : (map[ty][tx] === 3 ? '#00f' : '#888');
+                    ctx.fillRect(i, horizon - wH/2, 4, wH);
+                }
+            }
+        }
+        // Мама
+        let edx = enemy.x - player.x, edy = enemy.y - player.y, eD = Math.sqrt(edx*edx+edy*edy);
+        if(eD < 0.5 && !player.isCrouch) { isGameOver = true; document.getElementById('death').style.display='flex'; }
+    }
+
+    function update() {
+        if(isGameOver) return;
+        player.z += player.vVel;
+        if (player.z > 0) player.vVel -= 0.01; else { player.z = 0; player.vVel = 0; }
+
+        let s = player.isCrouch ? 0.03 : 0.07;
+        if (joy.active) {
+            player.x += (Math.cos(player.dir)*-joy.y + Math.sin(player.dir)*joy.x)*s;
+            player.y += (Math.sin(player.dir)*-joy.y - Math.cos(player.dir)*joy.x)*s;
+        }
+        render(); requestAnimationFrame(update);
+    }
+    update();
+</script>
+</body>
+</html>
